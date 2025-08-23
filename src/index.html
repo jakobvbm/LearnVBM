@@ -68,7 +68,7 @@
         .status-not-started{background:var(--danger-color);color:white}
         .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center}
         .modal-content{background:white;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto}
-        .loading-inline{display:inline-block;width:14px;height:14px;border:3px solid rgba(0,0,0,0.1);border-top-color:#333;border-radius:50%;animation:spin 1s linear infinite}
+        .loading-inline{display:inline-block;width=14px;height=14px;border=3px solid rgba(0,0,0,0.1);border-top-color=#333;border-radius=50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
         .difficulty-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
         .difficulty-btn{padding:8px;border:2px solid #ddd;border-radius:8px;cursor:pointer;text-align:center;font-weight:600}
@@ -417,27 +417,24 @@ function switchTab(tab, ev){
    =========================== */
 async function register(){
     const username = document.getElementById('register-username').value.trim();
+    const email = document.getElementById('register-email').value.trim();
     const password = document.getElementById('register-password').value;
     const confirm = document.getElementById('register-password-confirm').value;
 
-    if(!username || !password){ alert('Bitte alle Felder ausfüllen'); return; }
+    if(!username || !email || !password){ alert('Bitte alle Felder ausfüllen'); return; }
     if(password !== confirm){ alert('Passwörter stimmen nicht überein'); return; }
 
     try{
-        // Simuliere Server-Registrierung
-        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
-        if(users[username]){ throw new Error('Benutzername bereits vergeben'); }
-        
-        users[username] = { 
-            password, 
-            points: 0, 
-            clubId: null, 
-            clubName: null, 
-            isAdmin: false,
-            completedQuests: []
-        };
-        localStorage.setItem('lernapp-users', JSON.stringify(users));
-
+        // Sende Registrierungsdaten an das Backend
+        const response = await fetch('http://localhost:8000/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        if(!response.ok){
+            const error = await response.json();
+            throw new Error(error.detail || 'Registrierung fehlgeschlagen');
+        }
         alert('Account erstellt! Du kannst dich jetzt anmelden.');
         document.getElementById('login-username').value = username;
         switchTab('login', { currentTarget: document.querySelector('.tab-button') });
@@ -452,14 +449,19 @@ async function login(){
     if(!username || !password){ alert('Bitte Name und Passwort eingeben'); return; }
 
     try{
-        // Simuliere Server-Login
-        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
-        if(!users[username] || users[username].password !== password){
-            throw new Error('Ungültige Anmeldedaten');
+        // Sende Login-Daten an das Backend
+        const response = await fetch('http://localhost:8000/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        if(!response.ok){
+            const error = await response.json();
+            throw new Error(error.detail || 'Login fehlgeschlagen');
         }
-
-        currentUser = username;
-        currentUserData = users[username];
+        const data = await response.json();
+        currentUser = data.user;
+        currentUserData = data;
         saveLocalUser(currentUser);
         showMainScreen();
     }catch(err){
