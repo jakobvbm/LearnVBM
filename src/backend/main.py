@@ -64,7 +64,6 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user:
         print(f"[DEBUG] User not found: {user.username}")
         raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
-    print(f"[DEBUG] Eingabe-Passwort: {user.password}")
     print(f"[DEBUG] Gespeicherter Hash: {db_user.password}")
     if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
         print("[DEBUG] Passwort stimmt nicht überein!")
