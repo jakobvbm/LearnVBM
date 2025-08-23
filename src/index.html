@@ -78,6 +78,51 @@
         .subject-tabs{display:flex;gap:5px;margin-bottom:15px;flex-wrap:wrap}
         .subject-tab{padding:8px 12px;background:#e9ecef;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem}
         .subject-tab.active{background:var(--info-color);color:white}
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -91,7 +136,10 @@
                 📋 <span id="pending-quests">0</span> Quests
             </div>
         </div>
-        <button class="logout-btn" onclick="logout()">Abmelden</button>
+        <div style="display:flex;gap:10px;align-items:center">
+            <button class="action-button info-btn" onclick="showSettingsScreen()">⚙️</button>
+            <button class="logout-btn" onclick="logout()">Abmelden</button>
+        </div>
     </div>
 
     <div class="container">
@@ -359,6 +407,46 @@
                 <div style="display:flex;gap:8px;justify-content:center">
                     <button id="join-club-btn" class="action-button check-btn" onclick="joinSelectedClub()" disabled>🤝 Beitreten</button>
                     <button class="action-button back-btn" onclick="closeModal('join-club-modal')">❌ Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-screen" style="display:none">
+            <div class="card">
+                <h2>⚙️ Einstellungen</h2>
+                <div class="form-group">
+                    <label class="form-label">👤 Name ändern</label>
+                    <input id="settings-username" class="form-input" placeholder="Neuer Name">
+                    <button class="action-button info-btn" onclick="changeUsername()">Speichern</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔒 Passwort ändern</label>
+                    <input id="settings-password" type="password" class="form-input" placeholder="Neues Passwort">
+                    <button class="action-button info-btn" onclick="changePassword()">Speichern</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🌗 Dark/Light Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔊 Lautstärke</label>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" style="width:100%">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🌐 Sprache</label>
+                    <select id="language-select" class="form-select">
+                        <option value="de">Deutsch</option>
+                        <option value="en">Englisch</option>
+                        <option value="fr">Französisch</option>
+                        <option value="es">Spanisch</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+                    <button class="action-button back-btn" onclick="cancelSettings()">Abbrechen</button>
+                    <button class="action-button check-btn" onclick="saveSettings()">Speichern</button>
                 </div>
             </div>
         </div>
@@ -1441,6 +1529,38 @@ window.createQuest = createQuest;
 window.showManageAdminsModal = showManageAdminsModal;
 window.toggleAdmin = toggleAdmin;
 window.showQuestProgressModal = showQuestProgressModal;
+
+function showSettingsScreen(){
+    hideElement('login-screen');
+    hideElement('main-screen');
+    showElement('settings-screen');
+}
+function changeUsername(){
+    // TODO: API-Call für Namensänderung
+    alert('Name geändert!');
+}
+function changePassword(){
+    // TODO: API-Call für Passwortänderung
+    alert('Passwort geändert!');
+}
+function toggleMode(){
+    // Dark/Light Mode umschalten
+    const isDark = document.getElementById('mode-toggle').checked;
+    if(isDark){
+        document.body.classList.add('dark-mode');
+    }else{
+        document.body.classList.remove('dark-mode');
+    }
+}
+function cancelSettings(){
+    hideElement('settings-screen');
+    showElement('main-screen');
+}
+function saveSettings(){
+    // TODO: Einstellungen speichern
+    hideElement('settings-screen');
+    showElement('main-screen');
+}
 </script>
 </body>
 </html>
