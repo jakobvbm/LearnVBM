@@ -6,7 +6,124 @@
     <title>📚 Lern-App (Quest Edition)</title>
     <meta name="theme-color" content="#667eea">
 
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-light: #f8f9fa;
+            --text-dark: #2c3e50;
+            --info-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --border-radius: 20px;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+            background:var(--primary-gradient);
+            min-height:100vh;
+            color:var(--text-dark);
+        }
+        .container{max-width:100%;padding:20px;min-height:100vh;display:flex;flex-direction:column;justify-content:center}
+        .card{background:rgba(255,255,255,0.95);backdrop-filter:blur(6px);border-radius:var(--border-radius);box-shadow:var(--shadow);padding:30px;margin-bottom:20px}
+        .user-header{position:fixed;top:0;left:0;right:0;background:rgba(102,126,234,0.95);padding:10px 20px;z-index:100;color:white;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.2)}
+        .user-info{display:flex;align-items:center;gap:15px;font-size:0.9rem}
+        .points-display{background:rgba(255,255,255,0.2);padding:5px 12px;border-radius:15px;font-weight:bold}
+        .club-display{background:rgba(241,196,15,0.3);padding:5px 12px;border-radius:15px;font-weight:bold}
+        .admin-badge{background:rgba(231,76,60,0.8);padding:5px 12px;border-radius:15px;font-weight:bold;font-size:0.8rem}
+        .quest-notification{background:var(--warning-color);padding:5px 12px;border-radius:15px;font-weight:bold;cursor:pointer;animation:pulse 2s infinite}
+        @keyframes pulse{0%{opacity:1}50%{opacity:0.7}100%{opacity:1}}
+        .logout-btn{background:rgba(231,76,60,0.8);border:none;color:white;padding:8px 15px;border-radius:12px;cursor:pointer}
+        .login-form{max-width:400px;margin:0 auto}
+        .form-group{margin-bottom:20px}
+        .form-label{display:block;margin-bottom:8px;font-weight:600}
+        .form-input{width:100%;padding:12px;border-radius:12px;border:2px solid #e9ecef}
+        .form-select{width:100%;padding:12px;border-radius:12px;border:2px solid #e9ecef;background:white}
+        .tab-buttons{display:flex;margin-bottom:20px;background:#e9ecef;border-radius:12px;padding:5px}
+        .tab-button{flex:1;padding:10px;border-radius:8px;border:none;background:transparent;cursor:pointer;font-weight:600}
+        .tab-button.active{background:white;box-shadow:0 2px 10px rgba(0,0,0,0.1);color:var(--info-color)}
+        .nav-tabs{display:flex;gap:10px;margin-bottom:20px;justify-content:center;flex-wrap:wrap}
+        .nav-tab{padding:10px 15px;background:rgba(255,255,255,0.8);border-radius:20px;cursor:pointer;position:relative}
+        .nav-tab.active{border:2px solid var(--info-color)}
+        .quest-badge{position:absolute;top:-8px;right:-8px;background:var(--danger-color);color:white;border-radius:50%;width:20px;height:20px;font-size:0.8rem;display:flex;align-items:center;justify-content:center;font-weight:bold}
+        .modes-grid{display:grid;gap:12px}
+        .mode-card{padding:20px;border-radius:12px;background:white}
+        .action-button{padding:12px 18px;border-radius:20px;border:none;cursor:pointer;font-weight:600}
+        .check-btn{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white}
+        .back-btn{background:linear-gradient(135deg,#e74c3c,#c0392b);color:white}
+        .warning-btn{background:linear-gradient(135deg,#f39c12,#e67e22);color:white}
+        .info-btn{background:linear-gradient(135deg,#3498db,#2980b9);color:white}
+        .club-item{background:var(--bg-light);padding:12px;border-radius:10px;margin-bottom:8px;cursor:pointer}
+        .club-code-badge{background:var(--info-color);color:white;padding:2px 8px;border-radius:8px;font-size:0.8rem}
+        .leaderboard{background:white;padding:15px;border-radius:12px}
+        .quest-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:15px;border-radius:12px;margin-bottom:10px}
+        .quest-progress{background:rgba(255,255,255,0.2);height:6px;border-radius:3px;margin:8px 0;overflow:hidden}
+        .quest-progress-fill{background:var(--success-color);height:100%;transition:width 0.3s}
+        .admin-panel{background:linear-gradient(135deg,#e74c3c,#c0392b);color:white;padding:15px;border-radius:12px;margin-bottom:15px}
+        .member-item{display:flex;justify-content:space-between;align-items:center;padding:8px;background:#f8f9fa;border-radius:8px;margin-bottom:6px}
+        .member-status{font-size:0.8rem;padding:4px 8px;border-radius:8px;font-weight:bold}
+        .status-completed{background:var(--success-color);color:white}
+        .status-pending{background:var(--warning-color);color:white}
+        .status-not-started{background:var(--danger-color);color:white}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center}
+        .modal-content{background:white;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto}
+        .loading-inline{display:inline-block;width=14px;height=14px;border=3px solid rgba(0,0,0,0.1);border-top-color=#333;border-radius=50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .difficulty-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+        .difficulty-btn{padding:8px;border:2px solid #ddd;border-radius:8px;cursor:pointer;text-align:center;font-weight:600}
+        .difficulty-btn.selected{border-color:var(--info-color);background:rgba(52,152,219,0.1)}
+        .quest-task{background:#f8f9fa;padding:10px;border-radius:8px;margin:5px 0}
+        .task-input{width:80px;padding:5px;border:1px solid #ddd;border-radius:4px;text-align:center}
+        .subject-tabs{display:flex;gap:5px;margin-bottom:15px;flex-wrap:wrap}
+        .subject-tab{padding:8px 12px;background:#e9ecef;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem}
+        .subject-tab.active{background:var(--info-color);color:white}
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-left: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
 </head>
 <body>
     <div class="user-header" id="user-header" style="display:none">
@@ -48,7 +165,789 @@
                             <button class="action-button check-btn" onclick="login()">🚀 Anmelden</button>
                         </div>
                     </div>
-<script src="app.js"></script>
+
+                    <div id="register-form" style="display:none">
+                        <div class="form-group">
+                            <label class="form-label">👤 Benutzername wählen</label>
+                            <input id="register-username" class="form-input" placeholder="Wähle einen Namen">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">✉️ E-Mail-Adresse</label>
+                            <input id="register-email" type="email" class="form-input" placeholder="Deine E-Mail-Adresse">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🔒 Passwort</label>
+                            <input id="register-password" type="password" class="form-input" placeholder="Wähle ein Passwort">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">🔒 Passwort bestätigen</label>
+                            <input id="register-password-confirm" type="password" class="form-input" placeholder="Passwort wiederholen">
+                        </div>
+                        <div style="display:flex;gap:8px;justify-content:center">
+                            <button class="action-button check-btn" onclick="register()">✨ Account erstellen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-screen" style="display:none">
+            <div class="card">
+                <div class="nav-tabs">
+                    <div class="nav-tab active" onclick="showTab('modes', event)">🎮 Lernen</div>
+                    <div class="nav-tab" onclick="showTab('clubs', event)">🏛️ Clubs</div>
+                    <div class="nav-tab" onclick="showTab('quests', event)">
+                        📋 Quests
+                        <div class="quest-badge" id="quest-tab-badge" style="display:none">0</div>
+                    </div>
+                    <div class="nav-tab" onclick="showTab('leaderboard', event)">🏆 Bestenliste</div>
+                </div>
+
+                <div id="modes-tab" class="tab-content">
+                    <div class="modes-grid">
+                        <div class="mode-card">
+                            <h3>🧮 Mathematik</h3>
+                            <p>Mathe-Modus (lokal)</p>
+                            <div style="margin-top:8px">
+                                <button class="action-button check-btn" onclick="showMathMode()">Start</button>
+                            </div>
+                        </div>
+                        <div class="mode-card">
+                            <h3>📝 Deutsch</h3>
+                            <p>Sprach-Übungen</p>
+                            <div style="margin-top:8px">
+                                <button class="action-button check-btn" onclick="showGermanMode()">Start</button>
+                            </div>
+                        </div>
+                        <div class="mode-card">
+                            <h3>🇬🇧 English</h3>
+                            <p>Englisch lernen</p>
+                            <div style="margin-top:8px">
+                                <button class="action-button check-btn" onclick="showEnglishMode()">Start</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="clubs-tab" class="tab-content" style="display:none">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:12px">
+                        <button class="action-button check-btn" onclick="showCreateClubModal()">➕ Club erstellen</button>
+                        <button class="action-button back-btn" onclick="showJoinClubModal()">🚪 Club beitreten</button>
+                    </div>
+
+                    <div id="current-club-info" style="display:none">
+                        <div class="admin-panel" id="admin-panel" style="display:none">
+                            <h3>👑 Admin-Bereich</h3>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                                <button class="action-button warning-btn" onclick="showCreateQuestModal()">📋 Quest erstellen</button>
+                                <button class="action-button info-btn" onclick="showManageAdminsModal()">👥 Admins verwalten</button>
+                                <button class="action-button info-btn" onclick="showQuestProgressModal()">📊 Quest-Fortschritt</button>
+                            </div>
+                        </div>
+                        
+                        <div class="leaderboard">
+                            <h3>🏛️ Dein Club: <span id="current-club-name"></span></h3>
+                            <div style="text-align:center;margin:8px 0">Club-Code: <strong id="current-club-code">-</strong></div>
+                            <div style="text-align:center;margin-bottom:8px"><button class="action-button back-btn" onclick="leaveClub()">🚪 Club verlassen</button></div>
+                            <h4>👥 Mitglieder</h4>
+                            <ul id="club-members-list" style="list-style:none;padding:0"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quests-tab" class="tab-content" style="display:none">
+                    <div id="quest-list">
+                        <h3>📋 Deine Quests</h3>
+                        <div id="active-quests"></div>
+                        <div id="completed-quests" style="margin-top:20px">
+                            <h4>✅ Abgeschlossen</h4>
+                            <div id="completed-quests-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="leaderboard-tab" class="tab-content" style="display:none">
+                    <div class="leaderboard">
+                        <h3>🏆 Globale Bestenliste</h3>
+                        <div style="text-align:center;margin:8px 0"><button class="action-button check-btn" onclick="refreshLeaderboard()">🔄 Aktualisieren</button></div>
+                        <ul id="global-leaderboard" style="list-style:none;padding:0"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="math-screen" style="display:none">
+            <div class="card">
+                <h3 id="math-mode-title">🧮 Mathe Trainer</h3>
+                <div style="margin:12px 0">
+                    <div id="question" style="font-size:1.2rem;font-weight:700">Bereit zum Rechnen!</div>
+                    <input id="answer" class="form-input" style="margin-top:8px;width:120px" placeholder="?" />
+                </div>
+                <div style="display:flex;gap:8px"><button class="action-button check-btn" onclick="checkAnswer()">✅ Prüfen</button><button class="action-button back-btn" onclick="goBack()">🏠 Zurück</button></div>
+                <div style="margin-top:12px">
+                    <div id="quest-progress-display" style="display:none">
+                        <div>Quest-Fortschritt: <span id="quest-current">0</span>/<span id="quest-total">0</span></div>
+                        <div class="quest-progress"><div class="quest-progress-fill" id="quest-progress-bar"></div></div>
+                    </div>
+                    <div>Richtig: <span id="correct-score">0</span> — Falsch: <span id="wrong-score">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Modal -->
+        <div class="modal" id="quest-modal">
+            <div class="modal-content">
+                <h3>📋 Deine aktiven Quests</h3>
+                <div id="quest-modal-content"></div>
+                <div style="text-align:center;margin-top:15px">
+                    <button class="action-button back-btn" onclick="closeModal('quest-modal')">Schließen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Quest Modal -->
+        <div class="modal" id="create-quest-modal">
+            <div class="modal-content">
+                <h3>📋 Neue Quest erstellen</h3>
+                
+                <div class="subject-tabs">
+                    <button class="subject-tab active" onclick="selectQuestSubject('math', event)">🧮 Mathe</button>
+                    <button class="subject-tab" onclick="selectQuestSubject('german', event)">📝 Deutsch</button>
+                    <button class="subject-tab" onclick="selectQuestSubject('english', event)">🇬🇧 English</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📝 Quest-Titel</label>
+                    <input id="quest-title" class="form-input" placeholder="z.B. Grundrechenarten üben">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🎯 Anzahl Aufgaben</label>
+                    <input id="quest-count" type="number" class="form-input" value="10" min="1" max="50">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⚡ Schwierigkeit</label>
+                    <div class="difficulty-selector">
+                        <div class="difficulty-btn selected" onclick="selectDifficulty('easy', event)">😊 Leicht</div>
+                        <div class="difficulty-btn" onclick="selectDifficulty('medium', event)">🤔 Mittel</div>
+                        <div class="difficulty-btn" onclick="selectDifficulty('hard', event)">😅 Schwer</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">👥 Für wen?</label>
+                    <select id="quest-target" class="form-select">
+                        <option value="all">Alle Club-Mitglieder</option>
+                        <option value="specific">Bestimmte Mitglieder</option>
+                    </select>
+                </div>
+
+                <div id="member-selection" style="display:none">
+                    <div id="member-checkboxes"></div>
+                </div>
+
+                <div style="display:flex;gap:8px;justify-content:center;margin-top:15px">
+                    <button class="action-button check-btn" onclick="createQuest()">🚀 Quest erstellen</button>
+                    <button class="action-button back-btn" onclick="closeModal('create-quest-modal')">❌ Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Admins Modal -->
+        <div class="modal" id="manage-admins-modal">
+            <div class="modal-content">
+                <h3>👑 Admins verwalten</h3>
+                <div id="admin-management-list"></div>
+                <div style="text-align:center;margin-top:15px">
+                    <button class="action-button back-btn" onclick="closeModal('manage-admins-modal')">Schließen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Progress Modal -->
+        <div class="modal" id="quest-progress-modal">
+            <div class="modal-content">
+                <h3>📊 Quest-Fortschritt</h3>
+                <div id="quest-progress-list"></div>
+                <div style="text-align:center;margin-top:15px">
+                    <button class="action-button back-btn" onclick="closeModal('quest-progress-modal')">Schließen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other existing modals -->
+        <div class="modal" id="create-club-modal">
+            <div class="modal-content">
+                <h3>➕ Club erstellen</h3>
+                <div class="form-group">
+                    <label>🏛️ Club-Name</label>
+                    <input id="new-club-name" class="form-input" placeholder="Wähle einen Namen">
+                </div>
+                <div class="form-group">
+                    <label>🔒 Club-Code (optional)</label>
+                    <input id="new-club-code" class="form-input" placeholder="Code (leer = Server generiert)">
+                </div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                    <button class="action-button check-btn" onclick="createClub()">🚀 Club gründen</button>
+                    <button class="action-button back-btn" onclick="closeModal('create-club-modal')">❌ Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="join-club-modal">
+            <div class="modal-content">
+                <h3>🚪 Club beitreten</h3>
+                <div class="form-group">
+                    <label>🔍 Club-Code eingeben</label>
+                    <input id="join-club-input" class="form-input" placeholder="6-stelliger Club-Code" oninput="searchClubs()">
+                </div>
+                <div id="available-clubs-list" style="max-height:200px;overflow:auto;margin-bottom:8px"></div>
+                <div id="no-clubs-message" style="color:#7f8c8d;text-align:center;margin-bottom:8px">Gib einen Club-Code ein um beizutreten</div>
+                <div style="display:flex;gap:8px;justify-content:center">
+                    <button id="join-club-btn" class="action-button check-btn" onclick="joinSelectedClub()" disabled>🤝 Beitreten</button>
+                    <button class="action-button back-btn" onclick="closeModal('join-club-modal')">❌ Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-screen" style="display:none">
+            <div class="card">
+                <h2>⚙️ Einstellungen</h2>
+                <div class="form-group">
+                    <label class="form-label">👤 Name ändern</label>
+                    <input id="settings-username" class="form-input" placeholder="Neuer Name">
+                    <button class="action-button info-btn" onclick="changeUsername()">Speichern</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔒 Passwort ändern</label>
+                    <input id="settings-password" type="password" class="form-input" placeholder="Neues Passwort">
+                    <button class="action-button info-btn" onclick="changePassword()">Speichern</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🌗 Dark/Light Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🔊 Lautstärke</label>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50" style="width:100%">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🌐 Sprache</label>
+                    <select id="language-select" class="form-select">
+                        <option value="de">Deutsch</option>
+                        <option value="en">Englisch</option>
+                        <option value="fr">Französisch</option>
+                        <option value="es">Spanisch</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+                    <button class="action-button back-btn" onclick="cancelSettings()">Abbrechen</button>
+                    <button class="action-button check-btn" onclick="saveSettings()">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* -----------------------
+   CONFIG: API-BASIS URL
+   ----------------------- */
+const API_BASE = "https://meinserver.de/api"; // <-- hier anpassen
+
+// Globale Variablen
+let currentUser = null;
+let authToken = null;
+let selectedClub = null;
+let currentUserData = {};
+let activeQuests = [];
+let currentQuestMode = null;
+let questProgress = { current: 0, total: 0 };
+
+// Hilfsfunktionen
+function showElement(id){ document.getElementById(id).style.display = 'block'; }
+function hideElement(id){ document.getElementById(id).style.display = 'none'; }
+function openModal(id){ document.getElementById(id).style.display = 'flex'; }
+function closeModal(id){ 
+    document.getElementById(id).style.display = 'none'; 
+    if(id === 'join-club-modal') {
+        selectedClub = null; 
+        document.getElementById('available-clubs-list').innerHTML=''; 
+        document.getElementById('join-club-btn').disabled = true;
+    }
+}
+
+// LocalStorage
+function saveLocalUser(username){ localStorage.setItem('lernapp-current-user', username); }
+function loadLocalUser(){ return localStorage.getItem('lernapp-current-user'); }
+function clearLocalUser(){ localStorage.removeItem('lernapp-current-user'); }
+
+// UI-Initialisierung
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = loadLocalUser();
+    if(saved) document.getElementById('login-username').value = saved;
+    loadActiveQuests();
+});
+
+// Tabsteuerung (Login/Register)
+function switchTab(tab, ev){
+    document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
+    ev.currentTarget.classList.add('active');
+    if(tab==='login'){ showElement('login-form'); hideElement('register-form'); }
+    else { showElement('register-form'); hideElement('login-form'); }
+}
+
+/* ===========================
+   AUTH: Register & Login
+   =========================== */
+async function register(){
+    const username = document.getElementById('register-username').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+    const confirm = document.getElementById('register-password-confirm').value;
+
+    if(!username || !email || !password){ alert('Bitte alle Felder ausfüllen'); return; }
+    if(password !== confirm){ alert('Passwörter stimmen nicht überein'); return; }
+
+    try{
+        // Sende Registrierungsdaten an das Backend
+        const response = await fetch('http://localhost:8000/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        if(!response.ok){
+            const error = await response.json();
+            throw new Error(error.detail || 'Registrierung fehlgeschlagen');
+        }
+        alert('Account erstellt! Du kannst dich jetzt anmelden.');
+        document.getElementById('login-username').value = username;
+        switchTab('login', { currentTarget: document.querySelector('.tab-button') });
+    }catch(err){
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function login(){
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    if(!username || !password){ alert('Bitte Name und Passwort eingeben'); return; }
+
+    try{
+        // Sende Login-Daten an das Backend
+        const response = await fetch('http://localhost:8000/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        if(!response.ok){
+            const error = await response.json();
+            throw new Error(error.detail || 'Login fehlgeschlagen');
+        }
+        const data = await response.json();
+        currentUser = data.user;
+        currentUserData = data;
+        saveLocalUser(currentUser);
+        showMainScreen();
+    }catch(err){
+        alert('Fehler: ' + err.message);
+    }
+}
+
+function logout(){
+    if(confirm('Möchtest du dich abmelden?')){
+        currentUser = null;
+        currentUserData = {};
+        clearLocalUser();
+        document.getElementById('login-screen').style.display = 'block';
+        document.getElementById('main-screen').style.display = 'none';
+        document.getElementById('user-header').style.display = 'none';
+        hideElement('math-screen');
+    }
+}
+
+/* ===========================
+   UI: Bildschirmwechsel
+   =========================== */
+function showMainScreen(){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    document.getElementById('user-header').style.display = 'flex';
+    updateUserInterface();
+    loadActiveQuests();
+    showTab('modes', { currentTarget: document.querySelectorAll('.nav-tab')[0] });
+}
+
+function showTab(name, ev){
+    document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+    document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));
+    if(name==='modes') document.getElementById('modes-tab').style.display='block';
+    if(name==='clubs') { document.getElementById('clubs-tab').style.display='block'; updateClubInterface(); }
+    if(name==='quests') { document.getElementById('quests-tab').style.display='block'; updateQuestInterface(); }
+    if(name==='leaderboard') { document.getElementById('leaderboard-tab').style.display='block'; updateLeaderboard(); }
+    if(ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+}
+
+/* ===========================
+   USER & QUEST INTERFACE
+   =========================== */
+function updateUserInterface(){
+    if(!currentUser) return;
+    document.getElementById('current-username').textContent = currentUser;
+    document.getElementById('user-points').textContent = currentUserData.points || 0;
+    
+    if(currentUserData.clubId){
+        document.getElementById('user-club').textContent = currentUserData.clubName || 'Club';
+        if(currentUserData.isAdmin){
+            document.getElementById('admin-badge').style.display = 'block';
+        }
+    } else {
+        document.getElementById('user-club').textContent = 'Kein Club';
+        document.getElementById('admin-badge').style.display = 'none';
+    }
+    
+    updateQuestNotification();
+}
+
+function updateQuestNotification(){
+    const pendingQuests = activeQuests.filter(q => !q.completed).length;
+    if(pendingQuests > 0){
+        document.getElementById('quest-notification').style.display = 'block';
+        document.getElementById('pending-quests').textContent = pendingQuests;
+        document.getElementById('quest-tab-badge').style.display = 'block';
+        document.getElementById('quest-tab-badge').textContent = pendingQuests;
+    } else {
+        document.getElementById('quest-notification').style.display = 'none';
+        document.getElementById('quest-tab-badge').style.display = 'none';
+    }
+}
+
+/* ===========================
+   CLUB MANAGEMENT
+   =========================== */
+async function showCreateClubModal(){
+    openModal('create-club-modal');
+    document.getElementById('new-club-name').focus();
+}
+
+async function createClub(){
+    const clubName = document.getElementById('new-club-name').value.trim();
+    const clubCode = document.getElementById('new-club-code').value.trim() || generateClubCode();
+    if(!clubName){ alert('Bitte Club-Name eingeben'); return; }
+    
+    try{
+        const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+        const clubId = 'club_' + Date.now();
+        
+        clubs[clubId] = {
+            id: clubId,
+            name: clubName,
+            code: clubCode,
+            creator: currentUser,
+            members: [currentUser],
+            admins: [currentUser],
+            quests: []
+        };
+        localStorage.setItem('lernapp-clubs', JSON.stringify(clubs));
+        
+        // Update user data
+        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
+        users[currentUser].clubId = clubId;
+        users[currentUser].clubName = clubName;
+        users[currentUser].isAdmin = true;
+        localStorage.setItem('lernapp-users', JSON.stringify(users));
+        currentUserData = users[currentUser];
+        
+        alert(`Club "${clubName}" erstellt (Code: ${clubCode})`);
+        closeModal('create-club-modal');
+        updateUserInterface();
+        updateClubInterface();
+    }catch(err){
+        alert('Fehler: ' + err.message);
+    }
+}
+
+function generateClubCode(){
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function showJoinClubModal(){
+    openModal('join-club-modal');
+    document.getElementById('join-club-input').value = '';
+    document.getElementById('available-clubs-list').innerHTML = '';
+    document.getElementById('no-clubs-message').textContent = 'Gib einen Club-Code ein um beizutreten';
+}
+
+async function searchClubs(){
+    const searchInput = document.getElementById('join-club-input').value.trim().toUpperCase();
+    const clubsList = document.getElementById('available-clubs-list');
+    const noClubsMessage = document.getElementById('no-clubs-message');
+    const joinBtn = document.getElementById('join-club-btn');
+
+    clubsList.innerHTML = '';
+    selectedClub = null;
+    joinBtn.disabled = true;
+
+    if(searchInput.length === 0){
+        noClubsMessage.textContent = 'Gib einen Club-Code ein um beizutreten';
+        return;
+    }
+
+    try{
+        const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+        const matchingClubs = Object.values(clubs).filter(club => club.code === searchInput);
+        
+        if(matchingClubs.length > 0){
+            noClubsMessage.style.display = 'none';
+            matchingClubs.forEach(club=>{
+                const div = document.createElement('div');
+                div.className = 'club-item';
+                div.innerHTML = `<div style="font-weight:600">${club.name}</div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                        <div>👥 ${club.members.length} Mitglieder</div>
+                        <div class="club-code-badge">${club.code}</div>
+                    </div>`;
+                div.onclick = () => {
+                    document.querySelectorAll('#available-clubs-list .club-item').forEach(it=>it.style.border='none');
+                    div.style.border = '2px solid var(--info-color)';
+                    selectedClub = club;
+                    joinBtn.disabled = false;
+                };
+                clubsList.appendChild(div);
+            });
+        } else {
+            noClubsMessage.style.display = 'block';
+            noClubsMessage.textContent = '❌ Club mit diesem Code nicht gefunden';
+        }
+    }catch(err){
+        noClubsMessage.style.display = 'block';
+        noClubsMessage.textContent = '❌ Fehler: ' + err.message;
+    }
+}
+
+async function joinSelectedClub(){
+    if(!selectedClub){ alert('Bitte wähle einen Club aus'); return; }
+    if(selectedClub.members.includes(currentUser)){ alert('Du bist bereits in diesem Club'); return; }
+    
+    try{
+        const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+        clubs[selectedClub.id].members.push(currentUser);
+        localStorage.setItem('lernapp-clubs', JSON.stringify(clubs));
+        
+        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
+        users[currentUser].clubId = selectedClub.id;
+        users[currentUser].clubName = selectedClub.name;
+        users[currentUser].isAdmin = false;
+        localStorage.setItem('lernapp-users', JSON.stringify(users));
+        currentUserData = users[currentUser];
+        
+        alert(`Erfolgreich dem Club "${selectedClub.name}" beigetreten!`);
+        closeModal('join-club-modal');
+        updateUserInterface();
+        updateClubInterface();
+    }catch(err){
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function leaveClub(){
+    if(!currentUserData.clubId){ alert('Du bist in keinem Club'); return; }
+    if(!confirm('Möchtest du den Club verlassen?')) return;
+    
+    try{
+        const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+        const club = clubs[currentUserData.clubId];
+        club.members = club.members.filter(m => m !== currentUser);
+        club.admins = club.admins.filter(a => a !== currentUser);
+        localStorage.setItem('lernapp-clubs', JSON.stringify(clubs));
+        
+        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
+        users[currentUser].clubId = null;
+        users[currentUser].clubName = null;
+        users[currentUser].isAdmin = false;
+        localStorage.setItem('lernapp-users', JSON.stringify(users));
+        currentUserData = users[currentUser];
+        
+        alert('Du hast den Club verlassen.');
+        updateUserInterface();
+        updateClubInterface();
+    }catch(err){
+        alert('Fehler: ' + err.message);
+    }
+}
+
+async function updateClubInterface(){
+    if(!currentUserData.clubId){
+        document.getElementById('current-club-info').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none';
+        return;
+    }
+    
+    try{
+        const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+        const club = clubs[currentUserData.clubId];
+        const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
+        
+        document.getElementById('current-club-info').style.display = 'block';
+        document.getElementById('current-club-name').textContent = club.name;
+        document.getElementById('current-club-code').textContent = club.code;
+        
+        if(currentUserData.isAdmin){
+            document.getElementById('admin-panel').style.display = 'block';
+        } else {
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+        
+        const membersList = document.getElementById('club-members-list');
+        membersList.innerHTML = '';
+        club.members.sort((a,b)=> (users[b]?.points||0)-(users[a]?.points||0)).forEach((memberName)=>{
+            const memberData = users[memberName] || { points: 0 };
+            const li = document.createElement('li');
+            li.style.padding = '8px';
+            li.style.background = '#f8f9fa';
+            li.style.borderRadius = '8px';
+            li.style.marginBottom = '6px';
+            li.innerHTML = `<div style="font-weight:600">${memberName}${club.creator === memberName ? ' 👑':''}${club.admins.includes(memberName) && club.creator !== memberName ? ' 👨‍💼':''}${memberName===currentUser?' 👤':''}</div>
+                            <div style="color:var(--info-color);font-weight:700">${memberData.points||0} Punkte</div>`;
+            membersList.appendChild(li);
+        });
+    }catch(err){
+        console.error('updateClubInterface error', err);
+        document.getElementById('current-club-info').style.display = 'none';
+    }
+}
+
+/* ===========================
+   QUEST SYSTEM
+   =========================== */
+function loadActiveQuests(){
+    const saved = localStorage.getItem(`lernapp-quests-${currentUser}`);
+    activeQuests = saved ? JSON.parse(saved) : [];
+    updateQuestNotification();
+}
+
+function saveActiveQuests(){
+    localStorage.setItem(`lernapp-quests-${currentUser}`, JSON.stringify(activeQuests));
+    updateQuestNotification();
+}
+
+function showQuestModal(){
+    updateQuestModalContent();
+    openModal('quest-modal');
+}
+
+function updateQuestModalContent(){
+    const content = document.getElementById('quest-modal-content');
+    const pendingQuests = activeQuests.filter(q => !q.completed);
+    
+    if(pendingQuests.length === 0){
+        content.innerHTML = '<p style="text-align:center;color:#7f8c8d">Keine aktiven Quests</p>';
+        return;
+    }
+    
+    content.innerHTML = '';
+    pendingQuests.forEach(quest => {
+        const div = document.createElement('div');
+        div.className = 'quest-card';
+        div.innerHTML = `
+            <h4>${quest.title}</h4>
+            <p>${getSubjectName(quest.subject)} • ${getDifficultyName(quest.difficulty)} • ${quest.count} Aufgaben</p>
+            <div class="quest-progress">
+                <div class="quest-progress-fill" style="width:${(quest.progress/quest.count)*100}%"></div>
+            </div>
+            <p>${quest.progress}/${quest.count} abgeschlossen</p>
+            <button class="action-button check-btn" onclick="startQuest('${quest.id}')">▶️ Starten</button>
+        `;
+        content.appendChild(div);
+    });
+}
+
+function updateQuestInterface(){
+    const activeContainer = document.getElementById('active-quests');
+    const completedContainer = document.getElementById('completed-quests-list');
+    
+    const activeQuestsList = activeQuests.filter(q => !q.completed);
+    const completedQuestsList = activeQuests.filter(q => q.completed);
+    
+    activeContainer.innerHTML = '';
+    if(activeQuestsList.length === 0){
+        activeContainer.innerHTML = '<p style="text-align:center;color:#7f8c8d;padding:20px">Keine aktiven Quests</p>';
+    } else {
+        activeQuestsList.forEach(quest => {
+            const div = document.createElement('div');
+            div.className = 'quest-card';
+            div.innerHTML = `
+                <h4>${quest.title}</h4>
+                <p>${getSubjectName(quest.subject)} • ${getDifficultyName(quest.difficulty)} • ${quest.count} Aufgaben</p>
+                <div class="quest-progress">
+                    <div class="quest-progress-fill" style="width:${(quest.progress/quest.count)*100}%"></div>
+                </div>
+                <p>${quest.progress}/${quest.count} abgeschlossen • ${quest.count * 10} Punkte</p>
+                <button class="action-button check-btn" onclick="startQuest('${quest.id}')">▶️ Starten</button>
+            `;
+            activeContainer.appendChild(div);
+        });
+    }
+    
+    completedContainer.innerHTML = '';
+    if(completedQuestsList.length === 0){
+        completedContainer.innerHTML = '<p style="text-align:center;color:#7f8c8d;padding:10px">Noch keine abgeschlossenen Quests</p>';
+    } else {
+        completedQuestsList.forEach(quest => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background:#e8f5e8;padding:10px;border-radius:8px;margin:5px 0;';
+            div.innerHTML = `
+                <div style="font-weight:600">${quest.title}</div>
+                <div style="font-size:0.9rem;color:#27ae60">✅ Abgeschlossen • +${quest.count * 10} Punkte</div>
+            `;
+            completedContainer.appendChild(div);
+        });
+    }
+}
+
+function getSubjectName(subject){
+    const names = { math: '🧮 Mathe', german: '📝 Deutsch', english: '🇬🇧 English' };
+    return names[subject] || subject;
+}
+
+function getDifficultyName(difficulty){
+    const names = { easy: '😊 Leicht', medium: '🤔 Mittel', hard: '😅 Schwer' };
+    return names[difficulty] || difficulty;
+}
+
+function startQuest(questId){
+    const quest = activeQuests.find(q => q.id === questId);
+    if(!quest || quest.completed) return;
+    
+    currentQuestMode = quest;
+    closeModal('quest-modal');
+    
+    if(quest.subject === 'math'){
+        showMathMode();
+    } else if(quest.subject === 'german'){
+        showGermanMode();
+    } else if(quest.subject === 'english'){
+        showEnglishMode();
+    }
+}
+
+/* ===========================
+   ADMIN QUEST CREATION
+   =========================== */
+function showCreateQuestModal(){
+    if(!currentUserData.isAdmin){ alert('Nur Admins können Quests erstellen'); return; }
+    openModal('create-quest-modal');
+    loadClubMembersForQuest();
+}
+
+function loadClubMembersForQuest(){
+    const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
+    const club = clubs[currentUserData.clubId];
+    const memberSelection = document.getElementById('member-selection');
+    const memberCheckboxes = document.getElementById('member-checkboxes');
     
     memberCheckboxes.innerHTML = '';
     if(club && club.members){
