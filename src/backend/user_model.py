@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -9,3 +9,5 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    reset_password_token = Column(String, unique=True, index=True, nullable=True)
+    reset_password_token_expires = Column(DateTime, nullable=True)
