@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from src.backend.user_model import Base, User
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import bcrypt
 import os
 import secrets
@@ -51,11 +52,6 @@ class PasswordResetRequest(BaseModel):
 class PasswordReset(BaseModel):
     token: str
     new_password: str
-
-@app.get("/")
-async def read_index():
-    index_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../index.html'))
-    return FileResponse(index_path)
 
 @app.post("/register")
 async def register(user: UserRegister, db: Session = Depends(get_db)):
@@ -111,3 +107,10 @@ async def reset_password(request: PasswordReset, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Password has been reset successfully."}
+
+# Serve frontend
+@app.get("/")
+async def read_index():
+    return FileResponse(os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/index.html')))
+
+app.mount("/", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend'))), name="frontend")
