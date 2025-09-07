@@ -16,13 +16,26 @@ let questProgress = { current: 0, total: 0 };
 function showElement(id){ document.getElementById(id).style.display = 'block'; }
 function hideElement(id){ document.getElementById(id).style.display = 'none'; }
 function openModal(id){ document.getElementById(id).style.display = 'flex'; }
-function closeModal(id){ 
+function closeModal(id){
     document.getElementById(id).style.display = 'none'; 
-    if(id === 'join-club-modal') { 
+    if(id === 'join-club-modal') {
         selectedClub = null; 
         document.getElementById('available-clubs-list').innerHTML=''; 
         document.getElementById('join-club-btn').disabled = true;
     }
+}
+
+function hideAllLoggedInElements() {
+    hideElement('main-screen');
+    hideElement('user-header');
+    hideElement('math-screen');
+    hideElement('quest-modal');
+    hideElement('create-quest-modal');
+    hideElement('manage-admins-modal');
+    hideElement('quest-progress-modal');
+    hideElement('create-club-modal');
+    hideElement('join-club-modal');
+    hideElement('settings-screen');
 }
 
 // LocalStorage
@@ -61,11 +74,18 @@ async function checkLogin(){
                 showMainScreen();
             } else {
                 clearLocalUser();
+                showElement('login-screen');
+                hideAllLoggedInElements();
             }
         } catch (err) {
             console.error("Fehler bei der Token-Verifizierung:", err);
             clearLocalUser();
+            showElement('login-screen');
+            hideAllLoggedInElements();
         }
+    } else {
+        showElement('login-screen');
+        hideAllLoggedInElements();
     }
 }
 
@@ -149,10 +169,8 @@ async function logout(){
         currentUser = null;
         currentUserData = {};
         clearLocalUser();
-        document.getElementById('login-screen').style.display = 'block';
-        document.getElementById('main-screen').style.display = 'none';
-        document.getElementById('user-header').style.display = 'none';
-        hideElement('math-screen');
+        showElement('login-screen');
+        hideAllLoggedInElements();
     }
 }
 
@@ -342,7 +360,7 @@ async function joinSelectedClub(){
 
 async function leaveClub(){
     if(!currentUserData.clubId){ alert('Du bist in keinem Club'); return; }
-    if(!confirm('Möchtest du den Club verlassen?')) return;
+    if(!confirm('Möchtest du den Club verlassen?')) return; 
     
     try{
         const clubs = JSON.parse(localStorage.getItem('lernapp-clubs') || '{}');
@@ -791,7 +809,7 @@ function refreshLeaderboard(){ updateLeaderboard(); }
    =========================== */
 let correctAnswers = 0, wrongAnswers = 0;
 
-function showMathMode(){ 
+function showMathMode(){
     hideElement('main-screen'); 
     showElement('math-screen'); 
     document.getElementById('math-mode-title').textContent = currentQuestMode ? `🧮 Quest: ${currentQuestMode.title}` : '🧮 Mathe Trainer';
@@ -832,7 +850,7 @@ function updateQuestProgressDisplay(){
     document.getElementById('quest-progress-bar').style.width = percentage + '%';
 }
 
-function goBack(){ 
+function goBack(){
     showElement('main-screen'); 
     hideElement('math-screen'); 
     resetGame();
