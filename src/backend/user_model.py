@@ -9,5 +9,6 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    session_token = Column(String, unique=True, index=True, nullable=True)
     reset_password_token = Column(String, unique=True, index=True, nullable=True)
     reset_password_token_expires = Column(DateTime, nullable=True)

@@ -44,10 +44,11 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class TokenData(BaseModel):
+    session_token: str
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
-
 
 class PasswordReset(BaseModel):
     token: str
@@ -55,7 +56,6 @@ class PasswordReset(BaseModel):
 
 @app.post("/register")
 async def register(user: UserRegister, db: Session = Depends(get_db)):
-    # Prüfe, ob Username oder Email schon existiert
     if db.query(User).filter((User.username == user.username) | (User.email == user.email)).first():
         raise HTTPException(status_code=400, detail="Benutzername oder E-Mail existiert bereits.")
     hashed_pw = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -68,11 +68,29 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
 @app.post("/login")
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user or not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
+        raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
+    
+    token = secrets.token_hex(16)
+    db_user.session_token = token
+    db.commit()
+    
+    return {"message": "Login erfolgreich", "user": db_user.username, "email": db_user.email, "session_token": token}
+
+@app.post("/verify-token")
+async def verify_token(token_data: TokenData, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.session_token == token_data.session_token).first()
     if not db_user:
-        raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
-    if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
-        raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
-    return {"message": "Login erfolgreich", "user": db_user.username, "email": db_user.email}
+        raise HTTPException(status_code=401, detail="Ungültiger Session Token.")
+    return {"message": "Token valid", "user": db_user.username, "email": db_user.email}
+
+@app.post("/logout")
+async def logout(token_data: TokenData, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.session_token == token_data.session_token).first()
+    if db_user:
+        db_user.session_token = None
+        db.commit()
+    return {"message": "Logout erfolgreich"}
 
 @app.post("/request-password-reset")
 async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):
@@ -83,9 +101,7 @@ async def request_password_reset(request: PasswordResetRequest, db: Session = De
         user.reset_password_token = token
         user.reset_password_token_expires = expires
         db.commit()
-        # In a real app, you would email this token. For now, we print it.
         print(f"[INFO] Password reset token for {user.email}: {token}")
-    # Return a generic message to avoid leaking user existence
     return {"message": "If an account with this email exists, a password reset link has been sent."}
 
 
@@ -96,14 +112,10 @@ async def reset_password(request: PasswordReset, db: Session = Depends(get_db)):
     if not user or user.reset_password_token_expires < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Invalid or expired password reset token.")
 
-    # Hash new password
     hashed_pw = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     user.password = hashed_pw
-
-    # Invalidate the token
     user.reset_password_token = None
     user.reset_password_token_expires = None
-
     db.commit()
 
     return {"message": "Password has been reset successfully."}

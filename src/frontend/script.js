@@ -26,22 +26,54 @@ function closeModal(id){
 }
 
 // LocalStorage
-function saveLocalUser(username){ localStorage.setItem('lernapp-current-user', username); }
-function loadLocalUser(){ return localStorage.getItem('lernapp-current-user'); }
-function clearLocalUser(){ localStorage.removeItem('lernapp-current-user'); }
+function saveLocalUser(username, token){
+    localStorage.setItem('lernapp-current-user', username);
+    localStorage.setItem('lernapp-session-token', token);
+}
+function loadLocalUser(){
+    const user = localStorage.getItem('lernapp-current-user');
+    const token = localStorage.getItem('lernapp-session-token');
+    return { user, token };
+}
+function clearLocalUser(){
+    localStorage.removeItem('lernapp-current-user');
+    localStorage.removeItem('lernapp-session-token');
+}
 
 // UI-Initialisierung
 document.addEventListener('DOMContentLoaded', () => {
-    const saved = loadLocalUser();
-    if(saved) document.getElementById('login-username').value = saved;
-    loadActiveQuests();
+    checkLogin();
 });
+
+async function checkLogin(){
+    const { user, token } = loadLocalUser();
+    if (user && token) {
+        try {
+            const response = await fetch('http://localhost:8000/verify-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_token: token })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                currentUser = data.user;
+                currentUserData = data;
+                showMainScreen();
+            } else {
+                clearLocalUser();
+            }
+        } catch (err) {
+            console.error("Fehler bei der Token-Verifizierung:", err);
+            clearLocalUser();
+        }
+    }
+}
 
 // Tabsteuerung (Login/Register)
 function switchTab(tab, ev){
     document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
     ev.currentTarget.classList.add('active');
-    if(tab==='login'){ showElement('login-form'); hideElement('register-form'); }
+    if(tab==='login'){ showElement('login-form'); hideElement('register-form'); } 
     else { showElement('register-form'); hideElement('login-form'); }
 }
 
@@ -58,7 +90,6 @@ async function register(){
     if(password !== confirm){ alert('Passwörter stimmen nicht überein'); return; }
 
     try{
-        // Sende Registrierungsdaten an das Backend
         const response = await fetch('http://localhost:8000/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -82,7 +113,6 @@ async function login(){
     if(!username || !password){ alert('Bitte Name und Passwort eingeben'); return; }
 
     try{
-        // Sende Login-Daten an das Backend
         const response = await fetch('http://localhost:8000/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -95,15 +125,27 @@ async function login(){
         const data = await response.json();
         currentUser = data.user;
         currentUserData = data;
-        saveLocalUser(currentUser);
+        saveLocalUser(data.user, data.session_token);
         showMainScreen();
     }catch(err){
         alert('Fehler: ' + err.message);
     }
 }
 
-function logout(){
+async function logout(){
     if(confirm('Möchtest du dich abmelden?')){
+        const { token } = loadLocalUser();
+        if (token) {
+            try {
+                await fetch('http://localhost:8000/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_token: token })
+                });
+            } catch (err) {
+                console.error("Fehler beim Logout:", err);
+            }
+        }
         currentUser = null;
         currentUserData = {};
         clearLocalUser();
@@ -130,8 +172,8 @@ function showTab(name, ev){
     document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
     document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));
     if(name==='modes') document.getElementById('modes-tab').style.display='block';
-    if(name==='clubs') { document.getElementById('clubs-tab').style.display='block'; updateClubInterface(); }
-    if(name==='quests') { document.getElementById('quests-tab').style.display='block'; updateQuestInterface(); }
+    if(name==='clubs') { document.getElementById('clubs-tab').style.display='block'; updateClubInterface(); } 
+    if(name==='quests') { document.getElementById('quests-tab').style.display='block'; updateQuestInterface(); } 
     if(name==='leaderboard') { document.getElementById('leaderboard-tab').style.display='block'; updateLeaderboard(); }
     if(ev && ev.currentTarget) ev.currentTarget.classList.add('active');
 }
@@ -797,7 +839,7 @@ function goBack(){
     currentQuestMode = null;
 }
 
-function resetGame(){ 
+function resetGame(){
     correctAnswers=0; 
     wrongAnswers=0; 
     document.getElementById('correct-score').textContent='0'; 
