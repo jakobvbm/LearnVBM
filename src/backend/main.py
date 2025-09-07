@@ -4,8 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from src.backend.user_model import Base, User
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import bcrypt
 import os
+import secrets
+from datetime import datetime, timedelta
 
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/users.db'))
 DATABASE_URL = f"sqlite:///{DB_PATH}"
@@ -40,6 +43,20 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordReset(BaseModel):
+    token: str
+    new_password: str
+
+@app.get("/")
+async def read_index():
+    index_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../index.html'))
+    return FileResponse(index_path)
+
 @app.post("/register")
 async def register(user: UserRegister, db: Session = Depends(get_db)):
     # Prüfe, ob Username oder Email schon existiert
@@ -50,28 +67,47 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    print(f"[INFO] Neuer User registriert: {db_user.username}, {db_user.email}")
-    # Zeige alle User nach Registrierung
-    all_users = db.query(User).all()
-    print("[INFO] Alle User in der DB:")
-    for u in all_users:
-        print(f"  - {u.username}, {u.email}")
     return {"message": "User registered", "user": db_user.username, "email": db_user.email}
 
 @app.post("/login")
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if not db_user:
-        print(f"[DEBUG] User not found: {user.username}")
         raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
-    print(f"[DEBUG] Gespeicherter Hash: {db_user.password}")
     if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
-        print("[DEBUG] Passwort stimmt nicht überein!")
         raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch.")
-    print("[DEBUG] Login erfolgreich!")
     return {"message": "Login erfolgreich", "user": db_user.username, "email": db_user.email}
 
+@app.post("/request-password-reset")
+async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if user:
+        token = secrets.token_urlsafe(32)
+        expires = datetime.utcnow() + timedelta(hours=1)
+        user.reset_password_token = token
+        user.reset_password_token_expires = expires
+        db.commit()
+        # In a real app, you would email this token. For now, we print it.
+        print(f"[INFO] Password reset token for {user.email}: {token}")
+    # Return a generic message to avoid leaking user existence
+    return {"message": "If an account with this email exists, a password reset link has been sent."}
+
+
 @app.post("/reset-password")
-async def reset_password():
-    # TODO: Implement password reset logic
-    return {"message": "Password reset endpoint"}
+async def reset_password(request: PasswordReset, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.reset_password_token == request.token).first()
+
+    if not user or user.reset_password_token_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invalid or expired password reset token.")
+
+    # Hash new password
+    hashed_pw = bcrypt.hashpw(request.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user.password = hashed_pw
+
+    # Invalidate the token
+    user.reset_password_token = None
+    user.reset_password_token_expires = None
+
+    db.commit()
+
+    return {"message": "Password has been reset successfully."}
