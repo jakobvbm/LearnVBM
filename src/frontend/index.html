@@ -77,6 +77,7 @@
             <div class="card">
                 <div class="nav-tabs">
                     <div class="nav-tab active" onclick="showTab('modes', event)">🎮 Lernen</div>
+                    <div class="nav-tab" onclick="showTab('learner', event)">🧠 Learner</div>
                     <div class="nav-tab" onclick="showTab('clubs', event)">🏛️ Clubs</div>
                     <div class="nav-tab" onclick="showTab('quests', event)">
                         📋 Quests
@@ -155,7 +156,69 @@
                         <ul id="global-leaderboard" style="list-style:none;padding:0"></ul>
                     </div>
                 </div>
-            </div>
+
+                <div id="learner-tab" class="tab-content" style="display:none">
+                    <h3>🧠 Learner</h3>
+                    <div class="subject-tabs">
+                        <button id="learner-mode-calc-btn" class="subject-tab active" onclick="switchLearnerMode('calculator', event)">🧮 Rechner</button>
+                        <button id="learner-mode-chat-btn" class="subject-tab" onclick="switchLearnerMode('chat', event)">💬 Chat</button>
+                    </div>
+                
+                    <div id="calculator-view">
+                        <div class="calculator">
+                            <div class="calculator-display">
+                                <input id="learner-input" class="form-input">
+                                <div id="learner-result"></div>
+                            </div>
+                            <div class="calculator-keys">
+                                <button onclick="appendToLearnerInput('(')">(</button>
+                                <button onclick="appendToLearnerInput(')')">)</button>
+                                <button onclick="clearLearnerInput()">C</button>
+                                <button onclick="evaluateExpression()">=</button>
+                
+                                <button onclick="appendToLearnerInput('7')">7</button>
+                                <button onclick="appendToLearnerInput('8')">8</button>
+                                <button onclick="appendToLearnerInput('9')">9</button>
+                                <button onclick="appendToLearnerInput('/')">÷</button>
+                
+                                <button onclick="appendToLearnerInput('4')">4</button>
+                                <button onclick="appendToLearnerInput('5')">5</button>
+                                <button onclick="appendToLearnerInput('6')">6</button>
+                                <button onclick="appendToLearnerInput('*')">×</button>
+                
+                                <button onclick="appendToLearnerInput('1')">1</button>
+                                <button onclick="appendToLearnerInput('2')">2</button>
+                                <button onclick="appendToLearnerInput('3')">3</button>
+                                <button onclick="appendToLearnerInput('-')">-</button>
+                
+                                <button onclick="appendToLearnerInput('0')">0</button>
+                                <button onclick="appendToLearnerInput('.')">.</button>
+                                <button onclick="appendToLearnerInput('^')">^</button>
+                                <button onclick="appendToLearnerInput('+')">+</button>
+                
+                                <button onclick="appendToLearnerInput('sqrt(')">√</button>
+                                <button onclick="appendToLearnerInput('sin(')">sin</button>
+                                <button onclick="appendToLearnerInput('cos(')">cos</button>
+                                <button onclick="appendToLearnerInput('tan(')">tan</button>
+                
+                                <button onclick="appendToLearnerInput('log(')">log</button>
+                                <button onclick="appendToLearnerInput('pi')">π</button>
+                                <button onclick="appendToLearnerInput('e')">e</button>
+                                <button onclick="appendToLearnerInput('!')">!</button>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div id="chat-view" style="display: none;">
+                        <div id="chat-messages" class="chat-messages" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 8px;"></div>
+                        <div class="chat-input-area" style="display: flex; gap: 8px;">
+                            <input id="chat-input" class="form-input" placeholder="Schreibe eine Nachricht..." style="flex-grow: 1;">
+                            <button class="action-button check-btn" onclick="sendMessage()">Senden</button>
+                        </div>
+                    </div>
+                
+                    <button class="action-button warning-btn" id="mark-as-quest-btn" style="display:none; margin-top: 10px;" onclick="markAsQuest()">Als Quest markieren</button>
+                </div>            </div>
         </div>
 
         <div id="math-screen" style="display:none">
@@ -163,9 +226,10 @@
                 <h3 id="math-mode-title">🧮 Mathe Trainer</h3>
                 <div style="margin:12px 0">
                     <div id="question" style="font-size:1.2rem;font-weight:700">Bereit zum Rechnen!</div>
-                    <input id="answer" class="form-input" style="margin-top:8px;width:120px" placeholder="?" />
+                    <div id="answer-feedback" style="font-weight: bold; margin-top: 8px; min-height: 1.2em;"></div>
+                    <input id="answer" class="form-input" style="margin-top:8px;width:120px" placeholder="?" oninput="document.getElementById('answer-feedback').textContent = ''" />
                 </div>
-                <div style="display:flex;gap:8px"><button class="action-button check-btn" onclick="checkAnswer()">✅ Prüfen</button><button class="action-button back-btn" onclick="goBack()">🏠 Zurück</button></div>
+                <div style="display:flex;gap:8px"><button id="check-answer-btn" class="action-button check-btn" onclick="checkAnswer()">✅ Prüfen</button><button class="action-button back-btn" onclick="goBack()">🏠 Zurück</button></div>
                 <div style="margin-top:12px">
                     <div id="quest-progress-display" style="display:none">
                         <div>Quest-Fortschritt: <span id="quest-current">0</span>/<span id="quest-total">0</span></div>

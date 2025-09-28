@@ -10,6 +10,8 @@ import bcrypt
 import os
 import secrets
 from datetime import datetime, timedelta
+import urllib.request
+import json
 
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../data/users.db'))
 DATABASE_URL = f"sqlite:///{DB_PATH}"
@@ -46,6 +48,12 @@ class UserLogin(BaseModel):
 
 class TokenData(BaseModel):
     session_token: str
+
+class Expression(BaseModel):
+    expression: str
+
+class ChatMessage(BaseModel):
+    message: str
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
@@ -91,6 +99,37 @@ async def logout(token_data: TokenData, db: Session = Depends(get_db)):
         db_user.session_token = None
         db.commit()
     return {"message": "Logout erfolgreich"}
+
+@app.post("/evaluate-expression")
+async def evaluate_expression(expression: Expression):
+    try:
+        req = urllib.request.Request(
+            "http://api.mathjs.org/v4/",
+            data=json.dumps({"expr": expression.expression}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            return result
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/chat")
+async def chat(chat_message: ChatMessage):
+    user_message = chat_message.message.lower()
+    response_message = "Ich bin noch am lernen. Das habe ich nicht verstanden. Du kannst mich zum Beispiel fragen: 'Was ist die Hauptstadt von Frankreich?'"
+
+    if "hallo" in user_message:
+        response_message = "Hallo! Wie kann ich dir helfen?"
+    elif "wie geht es" in user_message:
+        response_message = "Mir geht es gut, danke der Nachfrage!"
+    elif "was ist die hauptstadt von frankreich" in user_message:
+        response_message = "Die Hauptstadt von Frankreich ist Paris."
+    elif "wer bist du" in user_message:
+        response_message = "Ich bin eine künstliche Intelligenz, die dir beim Lernen helfen soll."
+
+    return {"response": response_message}
 
 @app.post("/request-password-reset")
 async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):

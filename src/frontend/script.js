@@ -190,10 +190,49 @@ function showTab(name, ev){
     document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
     document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));
     if(name==='modes') document.getElementById('modes-tab').style.display='block';
+    if(name==='learner') document.getElementById('learner-tab').style.display='block';
     if(name==='clubs') { document.getElementById('clubs-tab').style.display='block'; updateClubInterface(); } 
     if(name==='quests') { document.getElementById('quests-tab').style.display='block'; updateQuestInterface(); } 
     if(name==='leaderboard') { document.getElementById('leaderboard-tab').style.display='block'; updateLeaderboard(); }
     if(ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+}
+
+/* ===========================
+   LEARNER FEATURE
+   =========================== */
+async function evaluateExpression() {
+    const expression = document.getElementById('learner-input').value;
+    const resultDiv = document.getElementById('learner-result');
+    if (!expression) {
+        resultDiv.innerHTML = 'Bitte gib eine Frage oder Aufgabe ein.';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/evaluate-expression', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expression })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.error) {
+                resultDiv.innerHTML = `<p style="color:red;">Fehler: ${data.error}</p>`;
+            } else {
+                resultDiv.innerHTML = `<p><strong>Ergebnis:</strong> ${data.result}</p>`;
+            }
+        } else {
+            const error = await response.json();
+            resultDiv.innerHTML = `<p style="color:red;">Fehler: ${error.detail || 'Ein unbekannter Fehler ist aufgetreten.'}</p>`;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = `<p style="color:red;">Fehler: ${err.message}</p>`;
+    }
+}
+
+function markAsQuest() {
+    alert("Diese Funktion ist noch nicht implementiert. Bitte gib mir mehr Informationen, wie eine Frage zu einem Quest werden soll.");
 }
 
 /* ===========================
@@ -208,10 +247,14 @@ function updateUserInterface(){
         document.getElementById('user-club').textContent = currentUserData.clubName || 'Club';
         if(currentUserData.isAdmin){
             document.getElementById('admin-badge').style.display = 'block';
+            document.getElementById('mark-as-quest-btn').style.display = 'block';
+        } else {
+            document.getElementById('mark-as-quest-btn').style.display = 'none';
         }
     } else {
         document.getElementById('user-club').textContent = 'Kein Club';
         document.getElementById('admin-badge').style.display = 'none';
+        document.getElementById('mark-as-quest-btn').style.display = 'none';
     }
     
     updateQuestNotification();
@@ -861,7 +904,15 @@ function resetGame(){
     correctAnswers=0; 
     wrongAnswers=0; 
     document.getElementById('correct-score').textContent='0'; 
-    document.getElementById('wrong-score').textContent='0'; 
+    document.getElementById('wrong-score').textContent='0';
+    const checkBtn = document.getElementById('check-answer-btn');
+    if (checkBtn) {
+        checkBtn.disabled = false;
+    }
+    const feedbackEl = document.getElementById('answer-feedback');
+    if (feedbackEl) {
+        feedbackEl.textContent = '';
+    }
 }
 
 function generateNewTask(){
@@ -1009,8 +1060,16 @@ function generateEnglishTask(){
 function checkAnswer(){
     const userAnswer = document.getElementById('answer').value.trim();
     const correctAnswer = document.getElementById('question').dataset.solution;
-    
-    if(!userAnswer){ alert('Bitte eine Antwort eingeben'); return; }
+    const feedbackEl = document.getElementById('answer-feedback');
+    const checkBtn = document.getElementById('check-answer-btn');
+
+    if(!userAnswer){
+        feedbackEl.textContent = 'Bitte eine Antwort eingeben';
+        feedbackEl.style.color = 'orange';
+        return;
+    }
+
+    checkBtn.disabled = true;
     
     let isCorrect = false;
     
@@ -1025,45 +1084,50 @@ function checkAnswer(){
     if(isCorrect){
         correctAnswers++;
         document.getElementById('correct-score').textContent = correctAnswers;
+        feedbackEl.textContent = 'Richtig! 🎉';
+        feedbackEl.style.color = 'var(--check-color)';
         
         // Quest-Fortschritt aktualisieren
         if(currentQuestMode){
             currentQuestMode.progress++;
             updateQuestProgressDisplay();
             
-            // Quest abgeschlossen?
             if(currentQuestMode.progress >= currentQuestMode.count){
-                completeQuest();
+                // Verzögerung, damit der Benutzer das "Richtig" sieht, bevor der Quest-Abschluss-Alert kommt.
+                setTimeout(completeQuest, 1200);
                 return;
             }
             
-            // Quest-Daten speichern
             const questIndex = activeQuests.findIndex(q => q.id === currentQuestMode.id);
             if(questIndex !== -1){
                 activeQuests[questIndex] = currentQuestMode;
                 saveActiveQuests();
             }
         }
-        
-        alert('Richtig! 🎉');
     } else {
         wrongAnswers++;
         document.getElementById('wrong-score').textContent = wrongAnswers;
-        alert(`Leider falsch. Die richtige Antwort war: ${correctAnswer}`);
+        feedbackEl.textContent = `Falsch. Richtig: ${correctAnswer}`;
+        feedbackEl.style.color = 'var(--back-color)';
     }
     
     // Nächste Aufgabe generieren
-    setTimeout(() => {
-        if(currentQuestMode && currentQuestMode.subject === 'math'){
-            generateMathTask();
-        } else if(currentQuestMode && currentQuestMode.subject === 'german'){
-            generateGermanTask();
-        } else if(currentQuestMode && currentQuestMode.subject === 'english'){
-            generateEnglishTask();
-        } else {
-            generateMathTask(); // Default
-        }
-    }, 1500);
+    if (document.getElementById('math-screen').style.display === 'none') {
+        // Wenn der Benutzer den Bildschirm verlassen hat, nichts tun.
+        checkBtn.disabled = false;
+        return;
+    }
+
+    if(currentQuestMode && currentQuestMode.subject === 'math'){
+        generateMathTask();
+    } else if(currentQuestMode && currentQuestMode.subject === 'german'){
+        generateGermanTask();
+    } else if(currentQuestMode && currentQuestMode.subject === 'english'){
+        generateEnglishTask();
+    } else {
+        generateMathTask(); // Default
+    }
+    checkBtn.disabled = false;
 }
 
 function completeQuest(){
@@ -1095,12 +1159,106 @@ function completeQuest(){
 /* ===========================
    KEYBOARD SHORTCUTS
    =========================== */
-document.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter' && document.getElementById('math-screen').style.display !== 'none'){
-        e.preventDefault();
-        checkAnswer();
+
+
+/* ===========================
+   EXPOSE FUNCTIONS TO GLOBAL SCOPE
+   =========================== */
+window.showCreateClubModal = showCreateClubModal;
+window.showJoinClubModal = showJoinClubModal;
+window.createClub = createClub;
+window.searchClubs = searchClubs;
+window.joinSelectedClub = joinSelectedClub;
+window.leaveClub = leaveClub;
+window.updateClubInterface = updateClubInterface;
+window.updateLeaderboard = updateLeaderboard;
+window.refreshLeaderboard = refreshLeaderboard;
+window.register = register;
+window.login = login;
+window.logout = logout;
+window.showMathMode = showMathMode;
+window.showGermanMode = showGermanMode;
+window.showEnglishMode = showEnglishMode;
+window.goBack = goBack;
+window.checkAnswer = checkAnswer;
+window.showTab = showTab;
+window.switchTab = switchTab;
+window.closeModal = closeModal;
+window.showQuestModal = showQuestModal;
+window.startQuest = startQuest;
+window.showCreateQuestModal = showCreateQuestModal;
+window.selectQuestSubject = selectQuestSubject;
+window.selectDifficulty = selectDifficulty;
+window.createQuest = createQuest;
+window.showManageAdminsModal = showManageAdminsModal;
+window.toggleAdmin = toggleAdmin;
+window.showQuestProgressModal = showQuestProgressModal;
+window.switchLearnerMode = switchLearnerMode;
+window.sendMessage = sendMessage;
+window.appendToLearnerInput = appendToLearnerInput;
+window.clearLearnerInput = clearLearnerInput;
+
+function showSettingsScreen(){
+    hideElement('login-screen');
+    hideElement('main-screen');
+    showElement('settings-screen');
+}
+function changeUsername(){
+    // TODO: API-Call für Namensänderung
+    alert('Name geändert!');
+}
+function changePassword(){
+    // TODO: API-Call für Passwortänderung
+    alert('Passwort geändert!');
+}
+function toggleMode(){
+    // Dark/Light Mode umschalten
+    const isDark = document.getElementById('mode-toggle').checked;
+    if(isDark){
+        document.body.classList.add('dark-mode');
+    }else{
+        document.body.classList.remove('dark-mode');
     }
-});
+}
+function cancelSettings(){
+    hideElement('settings-screen');
+    showElement('main-screen');
+}
+function saveSettings(){
+    // TODO: Einstellungen speichern
+    hideElement('settings-screen');
+    showElement('main-screen');
+}owElement('main-screen');
+}on completeQuest(){
+    if(!currentQuestMode) return;
+    
+    // Quest als abgeschlossen markieren
+    currentQuestMode.completed = true;
+    const questIndex = activeQuests.findIndex(q => q.id === currentQuestMode.id);
+    if(questIndex !== -1){
+        activeQuests[questIndex] = currentQuestMode;
+        saveActiveQuests();
+    }
+    
+    // Punkte hinzufügen
+    const pointsEarned = currentQuestMode.count * 10;
+    currentUserData.points = (currentUserData.points || 0) + pointsEarned;
+    
+    // User-Daten speichern
+    const users = JSON.parse(localStorage.getItem('lernapp-users') || '{}');
+    users[currentUser] = currentUserData;
+    localStorage.setItem('lernapp-users', JSON.stringify(users));
+    
+    alert(`🎉 Quest abgeschlossen!\n\nDu hast ${pointsEarned} Punkte erhalten!\n\nGesamtpunkte: ${currentUserData.points}`);
+    
+    updateUserInterface();
+    goBack();
+}
+
+/* ===========================
+   KEYBOARD SHORTCUTS
+   =========================== */
+
 
 /* ===========================
    EXPOSE FUNCTIONS TO GLOBAL SCOPE
